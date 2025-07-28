@@ -116,7 +116,7 @@ Check the `example/` directory for a fully working app.
 
 ## 💬 Issues & Feedback
 
-Feel free to [open an issue](https://github.com/J-Libraries/in_app_recorder/issues) or contribute a PR!
+Feel free to [open an issue](https://github.com/J-Libraries/flutter_screen_capture/issues) or contribute a PR!
 
 ---
 
@@ -124,9 +124,4 @@ Feel free to [open an issue](https://github.com/J-Libraries/in_app_recorder/issu
 
 MIT License © 2025 Nishant Mishra
 
-```
-
----
-
-Let me know if you want me to generate this as a file or create the actual package structure with `lib/`, `pubspec.yaml`, and `example/` directories.
 ```
