@@ -1,7 +1,7 @@
 ````markdown
 # in_app_recorder
 
-A Flutter plugin to **record only your app’s screen with an optional red border overlay**, save it locally, and share the recorded video via native share sheets (social/messaging apps).
+A Flutter plugin to, save it locally, and share the recorded video via native share sheets (social/messaging apps).
 
 > ✅ Records *only your app*, not the entire device screen.
 > ✅ Automatically shares video when recording ends.
@@ -32,10 +32,10 @@ dependencies:
 1. **Permissions** (Add in `android/app/src/main/AndroidManifest.xml`):
 
 ```xml
-<uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
-<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
-    android:maxSdkVersion="28"/>
-<uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+<uses-permission android:name="android.permission.WRITE_INTERNAL_STORAGE" />
+<uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+<uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
 ```
 
 2. **Minimum SDK Version** (in `android/app/build.gradle`):
@@ -57,8 +57,6 @@ Some Android versions may require additional permission handling for screen capt
 1. **Permissions** (in `ios/Runner/Info.plist`):
 
 ```xml
-<key>NSMicrophoneUsageDescription</key>
-<string>This app needs microphone access to record audio during screen capture.</string>
 <key>NSPhotoLibraryAddUsageDescription</key>
 <string>We need access to save the recorded screen to your photo library.</string>
 ```
@@ -109,7 +107,6 @@ Check the `example/` directory for a fully working app.
 ## 🔐 Notes
 
 * Android '9+ may require scoped storage handling
-* Ensure microphone/audio permissions are granted
 * Recording **starts after build**; consider a small delay before invoking
 
 ---
