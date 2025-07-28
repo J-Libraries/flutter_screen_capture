@@ -1,5 +1,5 @@
 ````markdown
-# flutter_screen_recorder_overlay
+# in_app_recorder
 
 A Flutter plugin to **record only your app’s screen with an optional red border overlay**, save it locally, and share the recorded video via native share sheets (social/messaging apps).
 
@@ -22,7 +22,7 @@ Add to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  flutter_screen_capture:
+  in_app_recorder:
 ````
 
 ---
@@ -72,7 +72,7 @@ Some Android versions may require additional permission handling for screen capt
 ## 🚀 Usage
 
 ```dart
-import 'package:flutter_screen_recorder_overlay/flutter_screen_capture.dart';
+import 'package:flutter_screen_recorder_overlay/in_app_recorder.dart';
 
 final controller = ScreenRecorderController(videoExportPath: videoExportPath, fps:  8, shareMessage: "Hey this is the recorded video", shareVideo: true);
 
@@ -116,7 +116,7 @@ Check the `example/` directory for a fully working app.
 
 ## 💬 Issues & Feedback
 
-Feel free to [open an issue](https://github.com/J-Libraries/flutter_screen_capture/issues) or contribute a PR!
+Feel free to [open an issue](https://github.com/J-Libraries/in_app_recorder/issues) or contribute a PR!
 
 ---
 

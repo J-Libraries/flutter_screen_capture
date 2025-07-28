@@ -1,7 +1,7 @@
-name: flutter_screen_capture
+name: in_app_recorder
 description: "A widget-level screen recorder with red border, export, and share support."
 version: 0.0.1
-homepage:
+repository: https://github.com/J-Libraries/flutter_screen_capture.git
 
 environment:
   sdk: ^3.8.1

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart' show Widget, BuildContext, RepaintBoundary;
 import 'package:flutter/src/widgets/framework.dart';
-import 'package:flutter_screen_capture/screen_recording_controller.dart' show ScreenRecorderController;
+import 'screen_recording_controller.dart' show ScreenRecorderController;
 
 class FlutterScreenCapture extends StatefulWidget {
   final Widget child;
