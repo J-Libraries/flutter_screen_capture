@@ -1,188 +1,132 @@
-Here’s a full `README.md` you can use for your Flutter screen recording plugin:
-
----
-
 ````markdown
-# screen_recorder
+# flutter_screen_recorder_overlay
 
-A Flutter plugin for recording only your app's screen (not the entire device screen) as a video, with support for red border indication and post-recording sharing to social/media apps.
+A Flutter plugin to **record only your app’s screen with an optional red border overlay**, save it locally, and share the recorded video via native share sheets (social/messaging apps).
 
----
-
-## ✨ Features
-
-- 📹 Record only your app’s screen
-- 🔴 Red border indicator while recording
-- 💾 Automatically saves video in `.mp4` format
-- 📤 Share the recorded video to other apps (social/media/messaging)
-- 🧩 Built-in example to demonstrate usage
+> ✅ Records *only your app*, not the entire device screen.
+> ✅ Automatically shares video when recording ends.
 
 ---
 
-## 🛠 Installation
+## 🧰 Features
 
-Add this to your `pubspec.yaml`:
+- Start/Stop app-only screen recording
+- Add/remove red border overlay to indicate recording state
+- Automatically share the video file once recorded
+
+---
+
+## 📦 Installation
+
+Add to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  screen_recorder:
+  flutter_screen_capture:
 ````
 
-Then run:
-
-```bash
-flutter pub get
-```
-
 ---
 
-## 🧪 Example
+## ⚙️ Android Setup
 
-A full working demo is available in the [example/](example) folder.
-
-```dart
-import 'package:flutter/material.dart';
-import 'package:flutter_screen_capture/flutter_screen_capture.dart';
-import 'package:flutter_screen_capture/screen_recording_controller.dart' show ScreenRecorderController;
-import 'package:path_provider/path_provider.dart' show getTemporaryDirectory;
-import 'package:uuid/uuid.dart' show Uuid;
-
-void main() {
-  runApp(const MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const MaterialApp(home: RecorderExample());
-  }
-}
-
-class RecorderExample extends StatefulWidget {
-  const RecorderExample({super.key});
-
-  @override
-  State<RecorderExample> createState() => _RecorderExampleState();
-}
-
-class _RecorderExampleState extends State<RecorderExample> {
-  bool isPathLoaded = true;
-  String videoExportPath = '';
-  late ScreenRecorderController recorderController;
-
-  loadVideoExportPathAndInitController()async{
-    final tempDirectory = await getTemporaryDirectory();
-    videoExportPath = '${tempDirectory.path}/${Uuid().v4()}.mp4';
-    recorderController = ScreenRecorderController(videoExportPath: videoExportPath, fps:  8, shareMessage: "Hey this is the recorded video", shareVideo: true);
-    setState(() {
-      isPathLoaded = true;
-    });
-  }
-  @override
-  void initState() {
-    loadVideoExportPathAndInitController();
-    super.initState();
-  }
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Screen Recorder Demo')),
-      body: isPathLoaded ?
-      Container(
-        decoration: recorderController.isRecording ? BoxDecoration(border: Border.all(color: Colors.red, width: 4),) : null,
-        child: Column(
-          children: [
-            Expanded(
-              child: FlutterScreenCapture(
-                controller: recorderController,
-                child: Center(
-                  child: Text(
-                    "Recording Test!",
-                    style: Theme.of(context).textTheme.headlineMedium,
-                  ),
-                ),
-              ),
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                ElevatedButton(
-                  onPressed: () async {
-                    recorderController.startRecording(setState: () =>  setState(() {}));
-                  },
-                  child: const Text("Start"),
-                ),
-                ElevatedButton(
-                  onPressed: () async {
-                    await recorderController.stopRecordingAndExport(setState: () => setState(() {}));
-                  },
-                  child: const Text("Stop & Share"),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-          ],
-        ),
-      ) : Center(child: CircularProgressIndicator()),
-    );
-  }
-}
-
-```
-
----
-
-## 📦 How It Works
-
-* Captures each frame of your app using `RepaintBoundary`
-* Combines frames into a video using `ffmpeg_kit_flutter`
-* Adds a red border to indicate recording
-* Allows direct sharing after recording ends
-
----
-
-## 📱 Android Setup
-
-Add permissions to `android/app/src/main/AndroidManifest.xml`:
+1. **Permissions** (Add in `android/app/src/main/AndroidManifest.xml`):
 
 ```xml
-<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
-<uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
 <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+    android:maxSdkVersion="28"/>
+<uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
 ```
 
-Also, ensure you have the `ffmpeg_kit_flutter` dependency:
+2. **Minimum SDK Version** (in `android/app/build.gradle`):
 
-```yaml
-dependencies:
-  ffmpeg_kit_flutter: ^4.5.1
+```gradle
+defaultConfig {
+  minSdkVersion 24
+}
+```
+
+3. **Enable View Recording** (if using MediaProjection internally):
+
+Some Android versions may require additional permission handling for screen capture APIs.
+
+---
+
+## 🍎 iOS Setup
+
+1. **Permissions** (in `ios/Runner/Info.plist`):
+
+```xml
+<key>NSMicrophoneUsageDescription</key>
+<string>This app needs microphone access to record audio during screen capture.</string>
+<key>NSPhotoLibraryAddUsageDescription</key>
+<string>We need access to save the recorded screen to your photo library.</string>
+```
+
+2. **Minimum iOS Version**: `iOS 12.0+` recommended
+
+3. **Post-processing**: iOS may require moving saved files to the app's document directory or Photos library for access.
+
+---
+
+## 🚀 Usage
+
+```dart
+import 'package:flutter_screen_recorder_overlay/flutter_screen_capture.dart';
+
+final controller = ScreenRecorderController(videoExportPath: videoExportPath, fps:  8, shareMessage: "Hey this is the recorded video", shareVideo: true);
+
+// Start recording
+await controller.startRecording();
+
+// Stop recording and share
+await controller.stopRecordingAndShare();
 ```
 
 ---
 
-## 📤 Share Integration
+## ✅ Add Red Border During Recording
 
-The plugin uses platform sharing to immediately open the share sheet when recording finishes. You can customize this callback to suit your app's flow.
-
----
-
-## 🚧 Limitations
-
-* Only supports Flutter widget layer recording, not full system screen capture
-* Best suited for UI tutorials, gameplay, or presentation recording
-* May not capture platform views (Google Maps, WebViews, etc.)
+```dart
+// This automatically adds a red border overlay while recording
+await controller.startRecording();
+```
 
 ---
 
-## 🧾 License
+## 📂 Output
 
-MIT License © 2025
+The recorded file is saved locally (`.mp4`) and then shared using native share sheets on both Android and iOS.
 
 ---
 
-## 💬 Maintainer
+## 📱 Example
 
-Made with ❤️ by [Nishant Mishra](https://github.com/J-Libraries)
+Check the `example/` directory for a fully working app.
 
+---
+
+## 🔐 Notes
+
+* Android '9+ may require scoped storage handling
+* Ensure microphone/audio permissions are granted
+* Recording **starts after build**; consider a small delay before invoking
+
+---
+
+## 💬 Issues & Feedback
+
+Feel free to [open an issue](https://github.com/J-Libraries/flutter_screen_capture/issues) or contribute a PR!
+
+---
+
+## 📝 License
+
+MIT License © 2025 Nishant Mishra
+
+```
+
+---
+
+Let me know if you want me to generate this as a file or create the actual package structure with `lib/`, `pubspec.yaml`, and `example/` directories.
+```
