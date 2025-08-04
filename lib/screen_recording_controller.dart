@@ -56,7 +56,7 @@ class ScreenRecorderController {
             final file = File(filePath);
             await file.writeAsBytes(byteData.buffer.asUint8List());
             _capturedFramesPath.add(filePath);
-            printToConsole('✅ Frame saved: $filePath - ${await file.length()} bytes');
+            debugPrint('✅ Frame saved: $filePath - ${await file.length()} bytes');
           }
 
         _frameCount++;
