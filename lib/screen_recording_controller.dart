@@ -1,6 +1,5 @@
 import 'dart:async' show Timer;
 import 'dart:io' show File;
-import 'dart:nativewrappers/_internal/vm/lib/internal_patch.dart';
 import 'dart:typed_data' show ByteData;
 import 'dart:ui' show ImageByteFormat;
 
