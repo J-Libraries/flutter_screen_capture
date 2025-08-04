@@ -32,7 +32,7 @@ dependencies:
 1. **Permissions** (Add in `android/app/src/main/AndroidManifest.xml`):
 
 ```xml
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 <uses-permission android:name="android.permission.WRITE_INTERNAL_STORAGE" />
 <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
 <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
@@ -122,3 +122,6 @@ Feel free to [open an issue](https://github.com/J-Libraries/flutter_screen_captu
 MIT License © 2025 Nishant Mishra
 
 ```
+
+### flutter pub publish --dry-run
+### flutter pub publish

@@ -1,5 +1,6 @@
 import 'dart:async' show Timer;
 import 'dart:io' show File;
+import 'dart:nativewrappers/_internal/vm/lib/internal_patch.dart';
 import 'dart:typed_data' show ByteData;
 import 'dart:ui' show ImageByteFormat;
 
@@ -15,7 +16,7 @@ class ScreenRecorderController {
   int _frameCount = 0;
   bool _isRecording = false;
   late Timer _recordingTimer;
-  final List<File> _capturedFrames = [];
+  final List<String> _capturedFramesPath = [];
 
   final GlobalKey repaintBoundaryKey = GlobalKey();
 
@@ -25,40 +26,6 @@ class ScreenRecorderController {
   final bool shareVideo;
   final String shareMessage;
   ScreenRecorderController({required this.videoExportPath, this.fps = 4, this.shareVideo = false, this.shareMessage = ''});
-
-  // void startRecording({setState}) async {
-  //   final status = await Permission.videos.request();
-  //   if (!status.isGranted) return;
-  //   _isRecording = true;
-  //   if(setState != null) {
-  //     setState();
-  //   }
-  //   int frameDuration = 1000 ~/ fps;
-  //   final frameInterval = Duration(milliseconds:frameDuration);
-  //
-  //   _recordingTimer = Timer.periodic(frameInterval, (_) async {
-  //     if (!_isRecording) return;
-  //
-  //     try {
-  //       final boundary = repaintBoundaryKey.currentContext?.findRenderObject();
-  //       if (boundary is! RenderRepaintBoundary) return;
-  //       var image = await boundary.toImage(pixelRatio: 2.0);
-  //       ByteData? byteData = await image.toByteData(format: ImageByteFormat.png);
-  //       if (byteData == null) return;
-  //
-  //       final dir = await getTemporaryDirectory();
-  //       final filePath = '${dir.path}/frame_${_frameCount.toString().padLeft(4, '0')}.png';
-  //       final file = File(filePath);
-  //       await file.writeAsBytes(byteData.buffer.asUint8List());
-  //
-  //       debugPrint('✅ Bytes Saved - ${await file.length()} bytes');
-  //       _capturedFrames.add(file);
-  //       _frameCount++;
-  //     } catch (e) {
-  //       debugPrint('Error capturing frame: $e');
-  //     }
-  //   });
-  // }
 
   void startRecording({setState}) async {
     final status = await Permission.videos.request();
@@ -88,9 +55,8 @@ class ScreenRecorderController {
             final filePath = '${dir.path}/frame_${_frameCount.toString().padLeft(4, '0')}.png';
             final file = File(filePath);
             await file.writeAsBytes(byteData.buffer.asUint8List());
-
-            print('✅ Frame saved: $filePath - ${await file.length()} bytes');
-            _capturedFrames.add(file);
+            _capturedFramesPath.add(filePath);
+            printToConsole('✅ Frame saved: $filePath - ${await file.length()} bytes');
           }
 
         _frameCount++;
@@ -107,7 +73,7 @@ class ScreenRecorderController {
     }
     _recordingTimer.cancel();
 
-    if (_capturedFrames.isEmpty) return;
+    if (_capturedFramesPath.isEmpty) return;
 
     final dir = await getTemporaryDirectory();
     final cmd = "-framerate 10 -i ${dir.path}/frame_%04d.png "
@@ -116,11 +82,11 @@ class ScreenRecorderController {
 
     final session = await FFmpegKit.execute(cmd);
     final returnCode = await session.getReturnCode();
-    final output = await session.getOutput();
-    final logs = await session.getAllLogs();
-    debugPrint("🎬 FFmpeg output:\n$output");
-    debugPrint("📋 FFmpeg logs:");
-    logs.forEach((log) => print(log.getMessage()));
+    // final output = await session.getOutput();
+    // final logs = await session.getAllLogs();
+    // debugPrint("🎬 FFmpeg output:\n$output");
+    // debugPrint("📋 FFmpeg logs:");
+    // logs.forEach((log) => print(log.getMessage()));
 
     if (ReturnCode.isSuccess(returnCode)) {
       debugPrint("✅ Video created at $videoExportPath");
@@ -128,10 +94,10 @@ class ScreenRecorderController {
       debugPrint("❌ FFmpeg failed with return code: $returnCode");
     }
 
-    for (var frame in _capturedFrames) {
-      await frame.delete();
+    for (var frame in _capturedFramesPath) {
+      File(frame).deleteSync(recursive: true);
     }
-    _capturedFrames.clear();
+    _capturedFramesPath.clear();
     _frameCount = 0;
 
     if(setState != null) {
