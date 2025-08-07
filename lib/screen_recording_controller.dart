@@ -1,5 +1,5 @@
 import 'dart:async' show Timer;
-import 'dart:io' show File;
+import 'dart:io' show File, Directory, FileSystemEntity, Platform;
 import 'dart:typed_data' show ByteData;
 import 'dart:ui' show ImageByteFormat;
 
@@ -10,12 +10,13 @@ import 'package:flutter/rendering.dart' show RenderRepaintBoundary;
 import 'package:path_provider/path_provider.dart' show getTemporaryDirectory;
 import 'package:permission_handler/permission_handler.dart' show Permission, PermissionActions, PermissionStatusGetters;
 import 'package:share_plus/share_plus.dart' show Share, XFile;
+import 'package:path/path.dart' as p;
 
 class ScreenRecorderController {
   int _frameCount = 0;
   bool _isRecording = false;
   late Timer _recordingTimer;
-  final List<String> _capturedFramesPath = [];
+  bool isFrameCaptured = false;
 
   final GlobalKey repaintBoundaryKey = GlobalKey();
 
@@ -27,8 +28,17 @@ class ScreenRecorderController {
   ScreenRecorderController({required this.videoExportPath, this.fps = 4, this.shareVideo = false, this.shareMessage = ''});
 
   void startRecording({setState}) async {
-    final status = await Permission.videos.request();
-    if (!status.isGranted) return;
+    if(Platform.isAndroid)
+      {
+        final status = await Permission.videos.request();
+        if (!status.isGranted) return;
+      }
+    else if(Platform.isIOS)
+      {
+        final status = await Permission.photos.request();
+        if (!status.isGranted) return;
+      }
+
 
     _isRecording = true;
     const frameInterval = Duration(milliseconds: 40);
@@ -36,6 +46,8 @@ class ScreenRecorderController {
       setState();
     }
 
+    File file;
+    final dir = await getTemporaryDirectory();
     _recordingTimer = Timer.periodic(frameInterval, (_) async {
       if (!_isRecording) return;
 
@@ -50,14 +62,14 @@ class ScreenRecorderController {
 
         if(_isRecording)
           {
-            final dir = await getTemporaryDirectory();
             final filePath = '${dir.path}/frame_${_frameCount.toString().padLeft(4, '0')}.png';
-            final file = File(filePath);
+            file = File(filePath);
             await file.writeAsBytes(byteData.buffer.asUint8List());
-            _capturedFramesPath.add(filePath);
+            if(!isFrameCaptured) {
+              isFrameCaptured = true;
+            }
             debugPrint('✅ Frame saved: $filePath - ${await file.length()} bytes');
           }
-
         _frameCount++;
       } catch (e) {
         debugPrint('Error capturing frame: $e');
@@ -72,7 +84,7 @@ class ScreenRecorderController {
     }
     _recordingTimer.cancel();
 
-    if (_capturedFramesPath.isEmpty) return;
+    if (!isFrameCaptured) return;
 
     final dir = await getTemporaryDirectory();
     final cmd = "-framerate 10 -i ${dir.path}/frame_%04d.png "
@@ -93,11 +105,11 @@ class ScreenRecorderController {
       debugPrint("❌ FFmpeg failed with return code: $returnCode");
     }
 
-    for (var frame in _capturedFramesPath) {
-      File(frame).deleteSync(recursive: true);
-    }
-    _capturedFramesPath.clear();
+    final directory = await getTemporaryDirectory();
+    deleteAllImagesInDirectory(directory.path);
+
     _frameCount = 0;
+    isFrameCaptured = false;
 
     if(setState != null) {
       setState();
@@ -118,5 +130,39 @@ class ScreenRecorderController {
       setState();
     }
     debugPrint("🎥 Video saved to: $videoExportPath");
+  }
+  Future<void> deleteAllImagesInDirectory(String directoryPath) async{
+    final imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.heic'];
+    try{
+      final dir = Directory(directoryPath);
+
+      if (await dir.exists()) {
+        final List<FileSystemEntity> entities = await dir.list(recursive: false).toList();
+
+        int deleteCount = 0;
+        for (FileSystemEntity entity in entities) {
+          if (entity is File) {
+            String fileExtension = p.extension(entity.path).toLowerCase();
+            if (imageExtensions.contains(fileExtension)) {
+              try {
+                await entity.delete();
+                deleteCount++;
+                print('Deleted image: ${entity.path}');
+              } catch (e) {
+                print('Error deleting file ${entity.path}: $e');
+                // Optionally, rethrow or collect errors
+              }
+            }
+          }
+        }
+        print('Deletion complete. $deleteCount image(s) deleted from $directoryPath.');
+      }
+      else {
+        print('Directory not found: $directoryPath');
+      }
+    } catch (e) {
+      print('Error accessing directory $directoryPath or listing files: $e');
+      // Handle specific exceptions if needed
+    }
   }
 }

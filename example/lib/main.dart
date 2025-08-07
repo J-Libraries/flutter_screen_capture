@@ -32,7 +32,7 @@ class _RecorderExampleState extends State<RecorderExample> {
   loadVideoExportPathAndInitController()async{
     final tempDirectory = await getTemporaryDirectory();
     videoExportPath = '${tempDirectory.path}/${Uuid().v4()}.mp4';
-    recorderController = ScreenRecorderController(videoExportPath: videoExportPath, fps:  8, shareMessage: "Hey this is the recorded video", shareVideo: true);
+    recorderController = ScreenRecorderController(videoExportPath: videoExportPath, fps:  4, shareMessage: "Hey this is the recorded video", shareVideo: true);
     setState(() {
       isPathLoaded = true;
     });
