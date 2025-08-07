@@ -19,13 +19,14 @@ class ScreenRecorderController {
   bool isFrameCaptured = false;
 
   final GlobalKey repaintBoundaryKey = GlobalKey();
+  final void Function(int)? updateFrameCount;
 
   bool get isRecording => _isRecording;
   final String videoExportPath;
   final int fps;
   final bool shareVideo;
   final String shareMessage;
-  ScreenRecorderController({required this.videoExportPath, this.fps = 4, this.shareVideo = false, this.shareMessage = ''});
+  ScreenRecorderController({required this.videoExportPath, this.fps = 4, this.shareVideo = false, this.shareMessage = '', this.updateFrameCount});
 
   void startRecording({setState}) async {
     if(Platform.isAndroid)
@@ -41,14 +42,13 @@ class ScreenRecorderController {
 
 
     _isRecording = true;
-    const frameInterval = Duration(milliseconds: 40);
+    final intervalDuration = 1000 ~/ fps;
     if(setState != null) {
       setState();
     }
 
-    File file;
     final dir = await getTemporaryDirectory();
-    _recordingTimer = Timer.periodic(frameInterval, (_) async {
+    _recordingTimer = Timer.periodic( Duration(milliseconds: intervalDuration), (_) async {
       if (!_isRecording) return;
 
       try {
@@ -63,10 +63,13 @@ class ScreenRecorderController {
         if(_isRecording)
           {
             final filePath = '${dir.path}/frame_${_frameCount.toString().padLeft(4, '0')}.png';
-            file = File(filePath);
+            final file = File(filePath);
             await file.writeAsBytes(byteData.buffer.asUint8List());
             if(!isFrameCaptured) {
               isFrameCaptured = true;
+            }
+            if(updateFrameCount != null) {
+              updateFrameCount!(_frameCount);
             }
             debugPrint('✅ Frame saved: $filePath - ${await file.length()} bytes');
           }
