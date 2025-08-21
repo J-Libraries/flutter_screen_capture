@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:in_app_recorder/flutter_screen_capture.dart' show FlutterScreenCapture;
-import 'package:in_app_recorder/screen_recording_controller.dart' show ScreenRecorderController;
+import 'package:in_app_recorder/screen_recording_controller.dart' show ScreenRecorderController, ProcessingStatusCallback;
 import 'package:path_provider/path_provider.dart' show getTemporaryDirectory;
 import 'package:uuid/uuid.dart' show Uuid;
 
@@ -81,7 +81,7 @@ class _RecorderExampleState extends State<RecorderExample> {
                   ),
                   ElevatedButton(
                     onPressed: () async {
-                      await recorderController.stopRecordingAndExport(setState: () => setState(() {}));
+                      await recorderController.stopRecording(setState: () => setState(() {}));
                     },
                     child: const Text("Stop & Share"),
                   ),

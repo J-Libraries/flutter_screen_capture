@@ -1,5 +1,6 @@
 import 'dart:async' show Timer;
 import 'dart:io' show File, Directory, FileSystemEntity, Platform;
+import 'dart:nativewrappers/_internal/vm/lib/ffi_allocation_patch.dart';
 import 'dart:typed_data' show ByteData;
 import 'dart:ui' show ImageByteFormat;
 
@@ -9,14 +10,18 @@ import 'package:flutter/material.dart' show GlobalKey, debugPrint;
 import 'package:flutter/rendering.dart' show RenderRepaintBoundary;
 import 'package:path_provider/path_provider.dart' show getTemporaryDirectory;
 import 'package:permission_handler/permission_handler.dart' show Permission, PermissionActions, PermissionStatusGetters;
-import 'package:share_plus/share_plus.dart' show Share, XFile;
+import 'package:share_plus/share_plus.dart' show Share, XFile, SharePlus, ShareParams;
 import 'package:path/path.dart' as p;
+
+typedef SetStateCallback = void Function();
+typedef ProcessingStatusCallback = void Function(bool isProcessing);
 
 class ScreenRecorderController {
   int _frameCount = 0;
   bool _isRecording = false;
   late Timer _recordingTimer;
   bool isFrameCaptured = false;
+  ReturnCode? returnCode;
 
   final GlobalKey repaintBoundaryKey = GlobalKey();
   final void Function(int)? updateFrameCount;
@@ -26,7 +31,9 @@ class ScreenRecorderController {
   final int fps;
   final bool shareVideo;
   final String shareMessage;
-  ScreenRecorderController({required this.videoExportPath, this.fps = 4, this.shareVideo = false, this.shareMessage = '', this.updateFrameCount});
+  final bool showLogs;
+
+  ScreenRecorderController({required this.videoExportPath, this.fps = 4, this.shareVideo = false, this.shareMessage = '', this.updateFrameCount, this.showLogs = false});
 
   void startRecording({setState}) async {
     if(Platform.isAndroid)
@@ -71,7 +78,9 @@ class ScreenRecorderController {
             if(updateFrameCount != null) {
               updateFrameCount!(_frameCount);
             }
-            debugPrint('✅ Frame saved: $filePath - ${await file.length()} bytes');
+            if(showLogs) {
+              debugPrint('✅ Frame saved: $filePath - ${await file.length()} bytes');
+            }
           }
         _frameCount++;
       } catch (e) {
@@ -80,8 +89,9 @@ class ScreenRecorderController {
 
     });
   }
-  Future<void> stopRecordingAndExport({setState}) async {
+  Future<void> stopRecording({ setState, ProcessingStatusCallback? isProcessing, }) async {
     _isRecording = false;
+    isProcessing?.call(true);
     if(setState != null) {
       setState();
     }
@@ -95,7 +105,7 @@ class ScreenRecorderController {
         "-c:v libx264 -pix_fmt yuv420p $videoExportPath";
 
     final session = await FFmpegKit.execute(cmd);
-    final returnCode = await session.getReturnCode();
+    returnCode = await session.getReturnCode();
     // final output = await session.getOutput();
     // final logs = await session.getAllLogs();
     // debugPrint("🎬 FFmpeg output:\n$output");
@@ -109,7 +119,7 @@ class ScreenRecorderController {
     }
 
     final directory = await getTemporaryDirectory();
-    deleteAllImagesInDirectory(directory.path);
+    _deleteAllImagesInDirectory(directory.path);
 
     _frameCount = 0;
     isFrameCaptured = false;
@@ -117,13 +127,36 @@ class ScreenRecorderController {
     if(setState != null) {
       setState();
     }
+    debugPrint("🎥 Video saved to: $videoExportPath");
+    isProcessing?.call(false);
+  }
+  Future<void> cancelRecording({setState})async{
+    _isRecording = false;
+    if(setState != null) {
+      setState();
+    }
+    _recordingTimer.cancel();
+
+    if (!isFrameCaptured) return;
+    final directory = await getTemporaryDirectory();
+    _deleteAllImagesInDirectory(directory.path);
+
+    _frameCount = 0;
+    isFrameCaptured = false;
+
+    if(setState != null) {
+      setState();
+    }
+  }
+  Future<void> share({setState}) async{
     if (ReturnCode.isSuccess(returnCode)) {
       debugPrint("✅ Video created at $videoExportPath");
       if(shareVideo) {
-        await Share.shareXFiles(
-        [XFile(videoExportPath)],
-        text: shareMessage,
-      );
+        ShareParams params = ShareParams(
+          files: [XFile(videoExportPath)],
+          text: shareMessage,
+        );
+        await SharePlus.instance.share(params);
       }
     } else {
       debugPrint("❌ FFmpeg failed with return code: $returnCode");
@@ -132,9 +165,8 @@ class ScreenRecorderController {
     if(setState != null) {
       setState();
     }
-    debugPrint("🎥 Video saved to: $videoExportPath");
   }
-  Future<void> deleteAllImagesInDirectory(String directoryPath) async{
+  Future<void> _deleteAllImagesInDirectory(String directoryPath) async{
     final imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp', '.heic'];
     try{
       final dir = Directory(directoryPath);
