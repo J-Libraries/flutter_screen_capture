@@ -6,12 +6,13 @@ import 'dart:ui' show ImageByteFormat;
 import 'package:ffmpeg_kit_flutter_new/ffmpeg_kit.dart' show FFmpegKit;
 import 'package:ffmpeg_kit_flutter_new/return_code.dart' show ReturnCode;
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart' show GlobalKey, printLog;
+import 'package:flutter/material.dart' show GlobalKey;
 import 'package:flutter/rendering.dart' show RenderRepaintBoundary;
 import 'package:path_provider/path_provider.dart' show getTemporaryDirectory;
 import 'package:permission_handler/permission_handler.dart' show Permission, PermissionActions, PermissionStatusGetters;
 import 'package:share_plus/share_plus.dart' show XFile, SharePlus, ShareParams;
 import 'package:path/path.dart' as p;
+import 'dart:developer' as developer;
 
 typedef SetStateCallback = void Function();
 typedef ProcessingStatusCallback = void Function(bool isProcessing);
@@ -80,12 +81,12 @@ class ScreenRecorderController {
             }
             if(showLogs) {
 
-              printLog('✅ Frame saved: $filePath - ${await file.length()} bytes');
+              developer.log('✅ Frame saved: $filePath - ${await file.length()} bytes');
             }
           }
         _frameCount++;
       } catch (e) {
-        printLog('Error capturing frame: $e');
+        developer.log('Error capturing frame: $e');
       }
 
     });
@@ -109,14 +110,14 @@ class ScreenRecorderController {
     returnCode = await session.getReturnCode();
     // final output = await session.getOutput();
     // final logs = await session.getAllLogs();
-    // printLog("🎬 FFmpeg output:\n$output");
-    // printLog("📋 FFmpeg logs:");
+    // developer.log("🎬 FFmpeg output:\n$output");
+    // developer.log("📋 FFmpeg logs:");
     // logs.forEach((log) => print(log.getMessage()));
 
     if (ReturnCode.isSuccess(returnCode)) {
-      printLog("✅ Video created at $videoExportPath");
+      developer.log("✅ Video created at $videoExportPath");
     } else {
-      printLog("❌ FFmpeg failed with return code: $returnCode");
+      developer.log("❌ FFmpeg failed with return code: $returnCode");
     }
 
     final directory = await getTemporaryDirectory();
@@ -128,7 +129,7 @@ class ScreenRecorderController {
     if(setState != null) {
       setState();
     }
-    printLog("🎥 Video saved to: $videoExportPath");
+    developer.log("🎥 Video saved to: $videoExportPath");
     isProcessing?.call(false);
   }
   Future<void> cancelRecording({setState})async{
@@ -151,7 +152,7 @@ class ScreenRecorderController {
   }
   Future<void> share({setState}) async{
     if (ReturnCode.isSuccess(returnCode)) {
-      printLog("✅ Video created at $videoExportPath");
+      developer.log("✅ Video created at $videoExportPath");
       if(shareVideo) {
         ShareParams params = ShareParams(
           files: [XFile(videoExportPath)],
@@ -160,7 +161,8 @@ class ScreenRecorderController {
         await SharePlus.instance.share(params);
       }
     } else {
-      printLog("❌ FFmpeg failed with return code: $returnCode");
+      
+      developer.log("❌ FFmpeg failed with return code: $returnCode");
     }
 
     if(setState != null) {
@@ -201,12 +203,4 @@ class ScreenRecorderController {
       // Handle specific exceptions if needed
     }
   }
-}
-
-printLog(message)
-{
-  if(kDebugMode)
-    {
-      print(message);
-    }
 }
