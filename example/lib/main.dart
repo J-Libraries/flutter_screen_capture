@@ -27,7 +27,7 @@ class RecorderExample extends StatefulWidget {
 }
 
 class _RecorderExampleState extends State<RecorderExample> {
-  bool isPathLoaded = true;
+  bool isPathLoaded = false;
   String videoExportPath = '';
   late ScreenRecorderController recorderController;
   int frameCount = 0;
@@ -61,7 +61,6 @@ class _RecorderExampleState extends State<RecorderExample> {
           decoration: recorderController.isRecording ? BoxDecoration(border: Border.all(color: Colors.red, width: 4), color: Colors.green,) : null,
           child: Column(
             children: [
-
               Expanded(
                 child: Center(
                   child: Text(
