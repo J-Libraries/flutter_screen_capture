@@ -8,6 +8,7 @@ import 'package:ffmpeg_kit_flutter_new/ffmpeg_kit_config.dart';
 import 'package:ffmpeg_kit_flutter_new/return_code.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart' show RenderRepaintBoundary;
+import 'package:share_plus/share_plus.dart';
 
 typedef SetStateCallback = void Function();
 typedef ProcessingStatusCallback = void Function(bool isProcessing);
@@ -44,6 +45,12 @@ class ScreenRecorderController {
     this.showLogs = false,
   });
 
+  share()async{
+    await Share.shareXFiles(
+      [XFile(videoExportPath)],
+      text: shareMessage,
+    );
+  }
   /// Start recording: sets up ffmpeg pipe and begins pushing frames.
   Future<void> startRecording({SetStateCallback? setState}) async {
     if (_isRecording) return;
